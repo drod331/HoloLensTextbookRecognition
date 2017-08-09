@@ -23,6 +23,12 @@ namespace HoloLensTextRecognition
         void SetPosition(Windows::Foundation::Numerics::float3 pos) { m_position = pos;  }
         Windows::Foundation::Numerics::float3 GetPosition()         { return m_position; }
 
+		void RotateLeft(float degrees);
+		void RotateRight(float degrees);
+		void ZoomIn(float scale);
+		void ZoomOut(float scale);
+
+
     private:
         // Cached pointer to device resources.
         std::shared_ptr<DX::DeviceResources>            m_deviceResources;

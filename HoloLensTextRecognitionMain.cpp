@@ -123,15 +123,12 @@ void HoloLensTextRecognitionMain::InitializeSpeechCommandList()
 	m_listening = false;
 	m_speechCommandData = ref new Platform::Collections::Map<Platform::String^, float4>();
 
-	m_speechCommandData->Insert(L"white", float4(1.0f, 1.0f, 1.0f, 1.f));
-	m_speechCommandData->Insert(L"grey", float4(0.5f, 0.5f, 0.5f, 1.f));
-	m_speechCommandData->Insert(L"green", float4(0.0f, 1.0f, 0.0f, 1.f));
-	m_speechCommandData->Insert(L"black", float4(0.1f, 0.1f, 0.1f, 1.f));
-	m_speechCommandData->Insert(L"red", float4(1.0f, 0.0f, 0.0f, 1.f));
-	m_speechCommandData->Insert(L"yellow", float4(1.0f, 1.0f, 0.0f, 1.f));
-	m_speechCommandData->Insert(L"aquamarine", float4(0.0f, 1.0f, 1.0f, 1.f));
-	m_speechCommandData->Insert(L"blue", float4(0.0f, 0.0f, 1.0f, 1.f));
-	m_speechCommandData->Insert(L"purple", float4(1.0f, 0.0f, 1.0f, 1.f));
+	m_speechCommandData->Insert(L"increase", float4(1.0f, 1.0f, 1.0f, 1.f));
+	m_speechCommandData->Insert(L"decrease", float4(0.5f, 0.5f, 0.5f, 1.f));
+	m_speechCommandData->Insert(L"left", float4(0.0f, 1.0f, 0.0f, 1.f));
+	m_speechCommandData->Insert(L"right", float4(0.1f, 0.1f, 0.1f, 1.f));
+	m_speechCommandData->Insert(L"stop", float4(1.0f, 0.0f, 0.0f, 1.f));
+	m_speechCommandData->Insert(L"start", float4(1.0f, 1.0f, 0.0f, 1.f));
 
 	// You can use non-dictionary words as speech commands.
 	m_speechCommandData->Insert(L"SpeechRecognizer", float4(0.5f, 0.1f, 1.f, 1.f));
@@ -151,7 +148,7 @@ void HoloLensTextRecognitionMain::BeginVoiceUIPrompt()
 	// A command list is used to continuously look for one-word commands.
 	// You need some way for the user to know what commands they can say. In this example, we provide
 	// verbal instructions; you could also use graphical UI, etc.
-	voicePrompt = L"Say zoom in, zoom out, stop rendering, or rotate at any time to change the hologram.";
+	voicePrompt = L"Say right, left, increased or decrease at any time to alter the cube.";
 
 	// Kick off speech synthesis.
 	create_task(speechSynthesizer->SynthesizeTextToStreamAsync(voicePrompt), task_continuation_context::use_current())
@@ -575,10 +572,30 @@ HolographicFrame^ HoloLensTextRecognitionMain::Update()
 
 			if (lastCommandString.find(listCommandString) != std::wstring::npos)
 			{
-				// If so, we can set the cube to the color that was spoken.
-				// TODO: Tie in hologram manipulation functions here.
-				//m_spinningCubeRenderer->SetColor(iter->Value);
-				//break;
+				if (lastCommandString._Equal(L"right"))
+				{
+					m_spinningCubeRenderer->RotateRight(degrees);
+				}
+				if (lastCommandString._Equal(L"left"))
+				{
+					m_spinningCubeRenderer->RotateLeft(degrees);
+				}
+				if (lastCommandString._Equal(L"increase"))
+				{
+					m_spinningCubeRenderer->ZoomIn(scale);
+				}
+				if (lastCommandString._Equal(L"decrease"))
+				{
+					m_spinningCubeRenderer->ZoomOut(scale);
+				}
+				if (lastCommandString._Equal(L"stop"))
+				{
+					//Stop rendering
+				}
+				if (lastCommandString._Equal(L"start"))
+				{
+					//Start rendering
+				}
 			}
 		}
 	}
@@ -1044,149 +1061,6 @@ void HoloLensTextRecognitionMain::OnCameraRemoved(
     // deallocating resources for this camera. At 60 frames per second this wait should
     // not take long.
     m_deviceResources->RemoveHolographicCamera(args->Camera);
-}
-
-void HoloLensTextRecognitionMain::Rotate()
-{
-	// Rotate the cube.
-	// Convert degrees to radians, then convert seconds to rotation angle.
-	const float    radians = XMConvertToRadians(30.f);
-	//const double   totalRotation = timer.GetTotalSeconds() * radiansPerSecond;
-	//const float    radians = static_cast<float>(fmod(totalRotation, XM_2PI));
-	const XMMATRIX modelRotation = XMMatrixRotationY(-radians);
-
-	// Position the cube.
-	Windows::Foundation::Numerics::float3 m_position = { 0.f, 0.f, -2.f };
-	const XMMATRIX modelTranslation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_position));
-
-	// Multiply to get the transform matrix.
-	// Note that this transform does not enforce a particular coordinate system. The calling
-	// class is responsible for rendering this content in a consistent manner.
-	const XMMATRIX modelTransform = XMMatrixMultiply(modelRotation, modelTranslation);
-
-	// The view and projection matrices are provided by the system; they are associated
-	// with holographic cameras, and updated on a per-camera basis.
-	// Here, we provide the model transform for the sample hologram. The model transform
-	// matrix is transposed to prepare it for the shader.
-	ModelConstantBuffer m_modelConstantBufferData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_modelConstantBuffer;
-	XMStoreFloat4x4(&m_modelConstantBufferData.model, XMMatrixTranspose(modelTransform));
-
-	// Loading is asynchronous. Resources must be created before they can be updated.
-	bool m_loadingComplete = false;
-	if (!m_loadingComplete)
-	{
-		return;
-	}
-
-	// Use the D3D device context to update Direct3D device-based resources.
-	const auto context = m_deviceResources->GetD3DDeviceContext();
-
-	// Update the model transform buffer for the hologram.
-	context->UpdateSubresource(
-		m_modelConstantBuffer.Get(),
-		0,
-		nullptr,
-		&m_modelConstantBufferData,
-		0,
-		0
-	);
-}
-
-void HoloLensTextRecognitionMain::ZoomIn()
-{
-	// Rotate the cube.
-	// Convert degrees to radians, then convert seconds to rotation angle.
-	//const float    radiansPerSecond = XMConvertToRadians(m_degreesPerSecond);
-	//const double   totalRotation = timer.GetTotalSeconds() * radiansPerSecond;
-	//const float    radians = static_cast<float>(fmod(totalRotation, XM_2PI));
-	const float zoom = 1.2;
-	const XMMATRIX modelScaling = XMMatrixScaling(zoom, zoom, zoom);
-
-	// Position the cube.
-	Windows::Foundation::Numerics::float3 m_position = { 0.f, 0.f, -2.f };
-	const XMMATRIX modelTranslation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_position));
-
-	// Multiply to get the transform matrix.
-	// Note that this transform does not enforce a particular coordinate system. The calling
-	// class is responsible for rendering this content in a consistent manner.
-	ModelConstantBuffer m_modelConstantBufferData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_modelConstantBuffer;
-	const XMMATRIX modelTransform = XMMatrixMultiply(modelScaling, modelTranslation);
-
-	// The view and projection matrices are provided by the system; they are associated
-	// with holographic cameras, and updated on a per-camera basis.
-	// Here, we provide the model transform for the sample hologram. The model transform
-	// matrix is transposed to prepare it for the shader.
-	XMStoreFloat4x4(&m_modelConstantBufferData.model, XMMatrixTranspose(modelTransform));
-
-	// Loading is asynchronous. Resources must be created before they can be updated.
-	bool m_loadingComplete = false;
-	if (!m_loadingComplete)
-	{
-		return;
-	}
-
-	// Use the D3D device context to update Direct3D device-based resources.
-	const auto context = m_deviceResources->GetD3DDeviceContext();
-
-	// Update the model transform buffer for the hologram.
-	context->UpdateSubresource(
-		m_modelConstantBuffer.Get(),
-		0,
-		nullptr,
-		&m_modelConstantBufferData,
-		0,
-		0
-	);
-}
-
-void HoloLensTextRecognitionMain::ZoomOut()
-{
-	// Rotate the cube.
-	// Convert degrees to radians, then convert seconds to rotation angle.
-	//const float    radiansPerSecond = XMConvertToRadians(m_degreesPerSecond);
-	//const double   totalRotation = timer.GetTotalSeconds() * radiansPerSecond;
-	//const float    radians = static_cast<float>(fmod(totalRotation, XM_2PI));
-	const float zoom = .8;
-	const XMMATRIX modelScaling = XMMatrixScaling(zoom, zoom, zoom);
-
-	// Position the cube.
-	Windows::Foundation::Numerics::float3 m_position = { 0.f, 0.f, -2.f };
-	const XMMATRIX modelTranslation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_position));
-
-	// Multiply to get the transform matrix.
-	// Note that this transform does not enforce a particular coordinate system. The calling
-	// class is responsible for rendering this content in a consistent manner.
-	const XMMATRIX modelTransform = XMMatrixMultiply(modelScaling, modelTranslation);
-
-	// The view and projection matrices are provided by the system; they are associated
-	// with holographic cameras, and updated on a per-camera basis.
-	// Here, we provide the model transform for the sample hologram. The model transform
-	// matrix is transposed to prepare it for the shader.
-	ModelConstantBuffer m_modelConstantBufferData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_modelConstantBuffer;
-	XMStoreFloat4x4(&m_modelConstantBufferData.model, XMMatrixTranspose(modelTransform));
-
-	// Loading is asynchronous. Resources must be created before they can be updated.
-	bool m_loadingComplete = false;
-	if (!m_loadingComplete)
-	{
-		return;
-	}
-
-	// Use the D3D device context to update Direct3D device-based resources.
-	const auto context = m_deviceResources->GetD3DDeviceContext();
-
-	// Update the model transform buffer for the hologram.
-	context->UpdateSubresource(
-		m_modelConstantBuffer.Get(),
-		0,
-		nullptr,
-		&m_modelConstantBufferData,
-		0,
-		0
-	);
 }
 
 //Adding voice recognition

@@ -215,7 +215,7 @@
     <ClCompile Include="Audio\OmnidirectionalSound.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="HoloLensTextRecognition.cpp" />
+    <ClCompile Include="HoloLensTextRecognitionMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

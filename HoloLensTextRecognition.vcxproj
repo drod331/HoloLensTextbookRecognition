@@ -429,7 +429,7 @@
     <ClCompile Include="Audio\AudioFileReader.cpp" />
     <ClCompile Include="Audio\AudioStreamReader.cpp" />
     <ClCompile Include="Audio\OmnidirectionalSound.cpp" />
-    <ClCompile Include="HoloLensTextRecognition.cpp" />
+    <ClCompile Include="HoloLensTextRecognitionMain.cpp" />
     <ClCompile Include="Common\DeviceResources.cpp" />
     <ClCompile Include="Common\CameraResources.cpp" />
     <ClCompile Include="Content\SpatialInputHandler.cpp" />

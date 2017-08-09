@@ -72,15 +72,6 @@ namespace HoloLensTextRecognition
 		// Clears event registration state. Used when changing to a new HolographicSpace
 		// and when tearing down AppMain.
 		void UnregisterHolographicEventHandlers();
-		
-		//Rotate the 3D object.
-		void Rotate();
-
-		//Scale the 3D object up.
-		void ZoomIn();
-
-		//Scale the 3D object down.
-		void ZoomOut();
 
 		// Process continuous speech recognition results.
 		void OnResultGenerated(
@@ -171,5 +162,9 @@ namespace HoloLensTextRecognition
 		bool                                                            m_waitingForSpeechPrompt = false;
 		bool                                                            m_waitingForSpeechCue = false;
 		float                                                           m_secondsUntilSoundIsComplete = 0.f;
+
+		//Constants for hologram manipulation functions
+		const float															degrees = 30.f;
+		const float															scale = .2;
     };
 }
