@@ -119,8 +119,8 @@ void AppView::Load(Platform::String^ entryPoint)
 		er_filters1.push_back(er_filter1);
 		er_filters2.push_back(er_filter2);
 	}
-	textRecognitionHelper.setERFilters1(&er_filters1);
-	textRecognitionHelper.setERFilters2(&er_filters2);
+	textRecognitionHelper.setERFilters1(er_filters1);
+	textRecognitionHelper.setERFilters2(er_filters2);
 
 	//double t_r = getTickCount();
 
@@ -175,7 +175,7 @@ void AppView::Run()
 
             HolographicFrame^ holographicFrame = m_main->Update();
 
-            if (m_main->Render(holographicFrame, &textRecognitionHelper))
+            if (m_main->Render(holographicFrame, textRecognitionHelper))
             {
                 // The holographic frame has an API that presents the swap chain for each
                 // holographic camera.

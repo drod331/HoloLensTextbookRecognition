@@ -664,10 +664,11 @@ HolographicFrame^ HoloLensTextRecognitionMain::Update()
 // Renders the current frame to each holographic camera, according to the
 // current application and spatial positioning state. Returns true if the
 // frame was rendered to at least one camera.
-bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::HolographicFrame^ holographicFrame, TextRecognitionHelper* textHelper)
+bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::HolographicFrame^ holographicFrame, TextRecognitionHelper textHelper)
 {
-    // Don't try to render anything before the first Update.
-	TextRecognitionHelper* textRecognitionHelper = textHelper;
+    
+	TextRecognitionHelper textRecognitionHelper = textHelper;
+	// Don't try to render anything before the first Update.
     if (m_timer.GetFrameCount() == 0)
     {
         return false;
@@ -695,8 +696,8 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 	Mat frame, grey, orig_grey, out_img;
 	vector<Mat> channels;
 	vector<vector<ERStat> > regions(2);
-	vector< Ptr<ERFilter> > er_filters1 = *textRecognitionHelper->getERFilters1();
-	vector< Ptr<ERFilter> > er_filters2 = *textRecognitionHelper->getERFilters2();//two channels
+	vector< Ptr<ERFilter> > er_filters1 = textRecognitionHelper.getERFilters1();
+	vector< Ptr<ERFilter> > er_filters2 = textRecognitionHelper.getERFilters2();
 	//Function variables @TODO replace with better solution
 	//int num_ocrs = 5;
 	//int RECOGNITION = 0;
@@ -722,8 +723,7 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 		resize(frame, frame, cv::Size(320, 240));
 
 	/*Text Detection*/
-
-	cvtColor(frame, grey, COLOR_RGB2GRAY);
+	cv::cvtColor(frame, grey, COLOR_RGB2GRAY);
 	grey.copyTo(orig_grey);
 	// Extract channels to be processed individually
 	channels.clear();
@@ -734,7 +734,7 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 	regions[0].clear();
 	regions[1].clear();
 
-	parallel_for_(cv::Range(0, (int)channels.size()), Parallel_extractCSER(channels, regions, er_filters1, er_filters2));
+	cv::parallel_for_(cv::Range(0, (int)channels.size()), Parallel_extractCSER(channels, regions, er_filters1, er_filters2));
 
 	// Detect character groups
 	vector< vector<Vec2i> > nm_region_groups;
@@ -794,7 +794,7 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 			r = Range(i, i + (int)num_ocrs);
 		else
 			r = Range(i, (int)detections.size());
-		parallel_for_(r, Parallel_OCR<OCRTesseract>(detections, outputs, boxes, words, confidences, ocrs));
+		cv::parallel_for_(r, Parallel_OCR<OCRTesseract>(detections, outputs, boxes, words, confidences, ocrs));
 	}
 
 

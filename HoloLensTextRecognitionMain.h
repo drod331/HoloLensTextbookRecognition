@@ -42,7 +42,7 @@ namespace HoloLensTextRecognition
         Windows::Graphics::Holographic::HolographicFrame^ Update();
 
         // Renders holograms, including world-locked content.
-        bool Render(Windows::Graphics::Holographic::HolographicFrame^ holographicFrame, TextRecognitionHelper* textHelper);
+        bool Render(Windows::Graphics::Holographic::HolographicFrame^ holographicFrame, TextRecognitionHelper textHelper);
 
         // Handle saving and loading of app state owned by AppMain.
         void SaveAppState();
