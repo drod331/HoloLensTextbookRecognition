@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "SpinningCubeRenderer.h"
 #include "Common\DirectXHelper.h"
+#include <string>
 
 using namespace HoloLensTextRecognition;
 using namespace Concurrency;
@@ -80,64 +81,21 @@ void SpinningCubeRenderer::Update(const DX::StepTimer& timer)
         );
 }
 
-void SpinningCubeRenderer::RotateLeft(float degrees)
+//Direction takes either "left" or "right" as input.
+void SpinningCubeRenderer::Rotate(float degrees, std::string direction)
 {
 	// Rotate the cube.
-	// Convert degrees to radians, then convert seconds to rotation angle.
-	const float    radians = XMConvertToRadians(degrees);
-	//const double   totalRotation = timer.GetTotalSeconds() * radiansPerSecond;
-	//const float    radians = static_cast<float>(fmod(totalRotation, XM_2PI));
-	const XMMATRIX modelRotation = XMMatrixRotationY(-radians);
-
-	// Position the cube.
-	Windows::Foundation::Numerics::float3 m_position = { 0.f, 0.f, -2.f };
-	const XMMATRIX modelTranslation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_position));
-
-	// Multiply to get the transform matrix.
-	// Note that this transform does not enforce a particular coordinate system. The calling
-	// class is responsible for rendering this content in a consistent manner.
-	const XMMATRIX modelTransform = XMMatrixMultiply(modelRotation, modelTranslation);
-
-	// The view and projection matrices are provided by the system; they are associated
-	// with holographic cameras, and updated on a per-camera basis.
-	// Here, we provide the model transform for the sample hologram. The model transform
-	// matrix is transposed to prepare it for the shader.
-	ModelConstantBuffer m_modelConstantBufferData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_modelConstantBuffer;
-	XMStoreFloat4x4(&m_modelConstantBufferData.model, XMMatrixTranspose(modelTransform));
-
-	// Loading is asynchronous. Resources must be created before they can be updated.
-
-	if (!m_loadingComplete)
+	// Convert degrees to radians.
+	float radians = XMConvertToRadians(degrees);
+	
+	if (direction == "left")
 	{
-		return;
+		radians *= -1;
 	}
-
-	// Use the D3D device context to update Direct3D device-based resources.
-	const auto context = m_deviceResources->GetD3DDeviceContext();
-
-	// Update the model transform buffer for the hologram.
-	context->UpdateSubresource(
-		m_modelConstantBuffer.Get(),
-		0,
-		nullptr,
-		&m_modelConstantBufferData,
-		0,
-		0
-	);
-}
-
-void SpinningCubeRenderer::RotateRight(float degrees)
-{
-	// Rotate the cube.
-	// Convert degrees to radians, then convert seconds to rotation angle.
-	const float    radians = XMConvertToRadians(-degrees);
-	//const double   totalRotation = timer.GetTotalSeconds() * radiansPerSecond;
-	//const float    radians = static_cast<float>(fmod(totalRotation, XM_2PI));
-	const XMMATRIX modelRotation = XMMatrixRotationY(-radians);
+	const XMMATRIX modelRotation = XMMatrixRotationY(radians);
+	
 
 	// Position the cube.
-	Windows::Foundation::Numerics::float3 m_position = { 0.f, 0.f, -2.f };
 	const XMMATRIX modelTranslation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_position));
 
 	// Multiply to get the transform matrix.
@@ -149,8 +107,6 @@ void SpinningCubeRenderer::RotateRight(float degrees)
 	// with holographic cameras, and updated on a per-camera basis.
 	// Here, we provide the model transform for the sample hologram. The model transform
 	// matrix is transposed to prepare it for the shader.
-	ModelConstantBuffer m_modelConstantBufferData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_modelConstantBuffer;
 	XMStoreFloat4x4(&m_modelConstantBufferData.model, XMMatrixTranspose(modelTransform));
 
 	// Loading is asynchronous. Resources must be created before they can be updated.
@@ -185,14 +141,11 @@ void SpinningCubeRenderer::ZoomIn(float scale)
 	const XMMATRIX modelScaling = XMMatrixScaling(zoom, zoom, zoom);
 
 	// Position the cube.
-	Windows::Foundation::Numerics::float3 m_position = { 0.f, 0.f, -2.f };
 	const XMMATRIX modelTranslation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_position));
 
 	// Multiply to get the transform matrix.
 	// Note that this transform does not enforce a particular coordinate system. The calling
 	// class is responsible for rendering this content in a consistent manner.
-	ModelConstantBuffer m_modelConstantBufferData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_modelConstantBuffer;
 	const XMMATRIX modelTransform = XMMatrixMultiply(modelScaling, modelTranslation);
 
 	// The view and projection matrices are provided by the system; they are associated
@@ -233,7 +186,6 @@ void SpinningCubeRenderer::ZoomOut(float scale)
 	const XMMATRIX modelScaling = XMMatrixScaling(zoom, zoom, zoom);
 
 	// Position the cube.
-	Windows::Foundation::Numerics::float3 m_position = { 0.f, 0.f, -2.f };
 	const XMMATRIX modelTranslation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_position));
 
 	// Multiply to get the transform matrix.
@@ -245,8 +197,6 @@ void SpinningCubeRenderer::ZoomOut(float scale)
 	// with holographic cameras, and updated on a per-camera basis.
 	// Here, we provide the model transform for the sample hologram. The model transform
 	// matrix is transposed to prepare it for the shader.
-	ModelConstantBuffer m_modelConstantBufferData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_modelConstantBuffer;
 	XMStoreFloat4x4(&m_modelConstantBufferData.model, XMMatrixTranspose(modelTransform));
 
 	// Loading is asynchronous. Resources must be created before they can be updated.

@@ -25,6 +25,8 @@
 #include <SpriteBatch.h>
 #include <SpriteFont.h>
 
+#include "opencv2\core\mat.hpp"
+
 // Updates, renders, and presents holographic content using Direct3D.
 namespace HoloLensTextRecognition
 {
@@ -162,6 +164,8 @@ namespace HoloLensTextRecognition
 		bool                                                            m_waitingForSpeechPrompt = false;
 		bool                                                            m_waitingForSpeechCue = false;
 		float                                                           m_secondsUntilSoundIsComplete = 0.f;
+
+		cv::Mat																frame;
 
 		//Constants for hologram manipulation functions
 		const float															degrees = 30.f;

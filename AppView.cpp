@@ -104,12 +104,8 @@ void AppView::SetWindow(CoreWindow^ window)
 void AppView::Load(Platform::String^ entryPoint)
 {
 	//OpenCV
-
 	// Create ERFilter objects with the 1st and 2nd stage default classifiers
 	// since er algorithm is not reentrant we need one filter for channel
-
-
-
 	vector< Ptr<ERFilter> > er_filters1;
 	vector< Ptr<ERFilter> > er_filters2;
 	for (int i = 0; i<2; i++)

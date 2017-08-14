@@ -3,6 +3,7 @@
 #include "..\Common\DeviceResources.h"
 #include "..\Common\StepTimer.h"
 #include "ShaderStructures.h"
+#include <string>
 
 namespace HoloLensTextRecognition
 {
@@ -23,8 +24,7 @@ namespace HoloLensTextRecognition
         void SetPosition(Windows::Foundation::Numerics::float3 pos) { m_position = pos;  }
         Windows::Foundation::Numerics::float3 GetPosition()         { return m_position; }
 
-		void RotateLeft(float degrees);
-		void RotateRight(float degrees);
+		void Rotate(float degrees, std::string direction);
 		void ZoomIn(float scale);
 		void ZoomOut(float scale);
 

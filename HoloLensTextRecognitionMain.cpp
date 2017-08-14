@@ -574,11 +574,11 @@ HolographicFrame^ HoloLensTextRecognitionMain::Update()
 			{
 				if (lastCommandString._Equal(L"right"))
 				{
-					m_spinningCubeRenderer->RotateRight(degrees);
+					m_spinningCubeRenderer->Rotate(degrees, "right");
 				}
 				if (lastCommandString._Equal(L"left"))
 				{
-					m_spinningCubeRenderer->RotateLeft(degrees);
+					m_spinningCubeRenderer->Rotate(degrees, "left");
 				}
 				if (lastCommandString._Equal(L"increase"))
 				{
@@ -682,9 +682,8 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
     // matrix, such as lighting maps.
     //
 	
-
-		
 	/*Text Recognition (OCR)*/
+	//@TODO code cleanup; relocate to header file
 	bool downsize = false;
 	int  REGION_TYPE = 1;
 	int  GROUPING_ALGORITHM = 0;
@@ -693,32 +692,25 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 	char *grouping_algorithms_str[2] = { const_cast<char *>("exhaustive_search"), const_cast<char *>("multioriented") };
 	char *recognitions_str[2] = { const_cast<char *>("Tesseract"), const_cast<char *>("NM_chain_features + KNN") };
 
-	Mat frame, grey, orig_grey, out_img;
+	Mat grey, orig_grey, out_img;
 	vector<Mat> channels;
 	vector<vector<ERStat> > regions(2);
 	vector< Ptr<ERFilter> > er_filters1 = textRecognitionHelper.getERFilters1();
 	vector< Ptr<ERFilter> > er_filters2 = textRecognitionHelper.getERFilters2();
-	//Function variables @TODO replace with better solution
-	//int num_ocrs = 5;
-	//int RECOGNITION = 0;
-	//vector<cv::Rect> nm_boxes;
-	//vector< Ptr<OCRTesseract> > ocrs;
-	//vector< Ptr<OCRHMMDecoder> > decoders;
 
-
+	//relocate to header file
 	int cam_idx = 0;
-	/*if (argc > 1)
-	cam_idx = atoi(argv[1]);*/
 
 	VideoCapture cap(cam_idx);
 	if (!cap.isOpened())
 	{
-		//std::cout << "ERROR: Cannot open default camera (0)." << endl;
-		//return -1;
+		return false;
 	}
-	//double t_all = (double)getTickCount();
 
-	bool capturedFrame = cap.read(frame);
+	//cap.read(frame);
+	cap.grab();
+	cap.retrieve(frame);
+
 	if (downsize)
 		resize(frame, frame, cv::Size(320, 240));
 
