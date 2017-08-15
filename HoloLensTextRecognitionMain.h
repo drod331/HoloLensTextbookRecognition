@@ -165,7 +165,13 @@ namespace HoloLensTextRecognition
 		bool                                                            m_waitingForSpeechCue = false;
 		float                                                           m_secondsUntilSoundIsComplete = 0.f;
 
-		cv::Mat																frame;
+		//OpenCV variables
+		cv::Mat															frame;
+		Platform::Agile<Windows::Media::Capture::MediaCapture>			m_mediaCapture;
+		bool															downsize = false;
+		int																REGION_TYPE = 1;
+		int																GROUPING_ALGORITHM = 0;
+		int																RECOGNITION = 0;
 
 		//Constants for hologram manipulation functions
 		const float															degrees = 30.f;

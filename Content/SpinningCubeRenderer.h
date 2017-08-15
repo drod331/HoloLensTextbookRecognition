@@ -25,8 +25,7 @@ namespace HoloLensTextRecognition
         Windows::Foundation::Numerics::float3 GetPosition()         { return m_position; }
 
 		void Rotate(float degrees, std::string direction);
-		void ZoomIn(float scale);
-		void ZoomOut(float scale);
+		void Zoom(float scale, std::string direction);
 
 
     private:
@@ -50,6 +49,8 @@ namespace HoloLensTextRecognition
         bool                                            m_loadingComplete = false;
         float                                           m_degreesPerSecond = 45.f;
         Windows::Foundation::Numerics::float3           m_position = { 0.f, 0.f, -2.f };
+		float											m_lastRotationDegrees = 0;
+		float											m_lastScale = 1;
 
         // If the current D3D Device supports VPRT, we can avoid using a geometry
         // shader just to set the render target array index.

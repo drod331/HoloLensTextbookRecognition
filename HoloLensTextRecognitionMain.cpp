@@ -582,11 +582,11 @@ HolographicFrame^ HoloLensTextRecognitionMain::Update()
 				}
 				if (lastCommandString._Equal(L"increase"))
 				{
-					m_spinningCubeRenderer->ZoomIn(scale);
+					m_spinningCubeRenderer->Zoom(scale, "increase");
 				}
 				if (lastCommandString._Equal(L"decrease"))
 				{
-					m_spinningCubeRenderer->ZoomOut(scale);
+					m_spinningCubeRenderer->Zoom(scale, "decrease");
 				}
 				if (lastCommandString._Equal(L"stop"))
 				{
@@ -684,10 +684,6 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 	
 	/*Text Recognition (OCR)*/
 	//@TODO code cleanup; relocate to header file
-	bool downsize = false;
-	int  REGION_TYPE = 1;
-	int  GROUPING_ALGORITHM = 0;
-	int  RECOGNITION = 0;
 	char *region_types_str[2] = { const_cast<char *>("ERStats"), const_cast<char *>("MSER") };
 	char *grouping_algorithms_str[2] = { const_cast<char *>("exhaustive_search"), const_cast<char *>("multioriented") };
 	char *recognitions_str[2] = { const_cast<char *>("Tesseract"), const_cast<char *>("NM_chain_features + KNN") };
@@ -698,10 +694,8 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 	vector< Ptr<ERFilter> > er_filters1 = textRecognitionHelper.getERFilters1();
 	vector< Ptr<ERFilter> > er_filters2 = textRecognitionHelper.getERFilters2();
 
-	//relocate to header file
-	int cam_idx = 0;
-
-	VideoCapture cap(cam_idx);
+	//VideoCapture of device 0 returns a device memory error.  This will have to be refactored for proper camera stream allocation 
+	VideoCapture cap(0);
 	if (!cap.isOpened())
 	{
 		return false;
