@@ -727,16 +727,16 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 	vector<cv::Rect> nm_boxes;
 	switch (GROUPING_ALGORITHM)
 	{
-	case 0:
-	{
-		erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_HORIZ);
-		break;
-	}
-	case 1:
-	{
-		erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_ANY, "./trained_classifier_erGrouping.xml", 0.5);
-		break;
-	}
+		case 0:
+		{
+			erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_HORIZ);
+			break;
+		}
+		case 1:
+		{
+			erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_ANY, "./trained_classifier_erGrouping.xml", 0.5);
+			break;
+		}
 	}
 
 	//fframe.copyTo(out_img);
@@ -744,15 +744,9 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 	float scale_img = (float)((600.f / 300) / scale);;// (float)((600.f / frame.rows) / scale);
 	float scale_font = (float)(2 - scale_img) / 1.4f;
 	vector<string> words_detection;
-	/*float min_confidence1 = 0.f, min_confidence2 = 0.f;
-	if (RECOGNITION == 0)
-	{
-		min_confidence1 = 51.f; min_confidence2 = 60.f;
-	}*/
 	float min_confidence1 = 51.f, min_confidence2 = 60.f;
 	int num_ocrs = 5;//TextRecognitionHelper.getInstance().getNumOCRs();
-	vector< Ptr<OCRTesseract> > ocrs; //= TextRecognitionHelper.getInstance().getOCR();
-	//vector<cv::Rect> nm_boxes;
+	vector< Ptr<OCRTesseract>> ocrs = textRecognitionHelper.getOCRs();
 
 	vector<Mat> detections;
 
@@ -803,23 +797,9 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
 				isRepetitive(words[i][j]))
 				continue;
 			words_detection.push_back(words[i][j]);
-			/*rectangle(out_img, boxes[i][j].tl(), boxes[i][j].br(), Scalar(255, 0, 255), 3);
-			cv::Size word_size = getTextSize(words[i][j], FONT_HERSHEY_SIMPLEX, (double)scale_font, (int)(3 * scale_font), NULL);
-			rectangle(out_img, boxes[i][j].tl() - cv::Point(3, word_size.height + 3), boxes[i][j].tl() + cv::Point(word_size.width, 0), Scalar(255, 0, 255), -1);
-			putText(out_img, words[i][j], boxes[i][j].tl() - cv::Point(1, 1), FONT_HERSHEY_SIMPLEX, scale_font, Scalar(255, 255, 255), (int)(3 * scale_font));*/
 		}
 
 	}
-
-	/*t_all = ((double)getTickCount() - t_all) * 1000 / getTickFrequency();
-	char buff[100];
-	sprintf(buff, "%2.1f Fps. @ %dx%d", (float)(1000 / t_all), out_img.cols, out_img.rows);
-	string fps_info = buff;
-	rectangle(out_img, cv::Point(out_img.rows - (160 / scale), out_img.rows - (70 / scale)), cv::Point(out_img.cols, out_img.rows), Scalar(255, 255, 255), -1);
-	putText(out_img, fps_info, cv::Point(10, out_img.rows - (10 / scale)), FONT_HERSHEY_DUPLEX, scale_font, Scalar(255, 0, 0));
-	putText(out_img, region_types_str[REGION_TYPE], cv::Point(out_img.rows - (150 / scale), out_img.rows - (50 / scale)), FONT_HERSHEY_DUPLEX, scale_font, Scalar(255, 0, 0));
-	putText(out_img, grouping_algorithms_str[GROUPING_ALGORITHM], cv::Point(out_img.rows - (150 / scale), out_img.rows - (30 / scale)), FONT_HERSHEY_DUPLEX, scale_font, Scalar(255, 0, 0));
-	putText(out_img, recognitions_str[RECOGNITION], cv::Point(out_img.rows - (150 / scale), out_img.rows - (10 / scale)), FONT_HERSHEY_DUPLEX, scale_font, Scalar(255, 0, 0));*/
 
     // Lock the set of holographic camera resources, then draw to each camera
     // in this frame.

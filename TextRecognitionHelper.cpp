@@ -30,20 +30,30 @@ using namespace cv::text;
 			s_instance = new TextRecognitionHelper;
 		return s_instance;
 	}*/
-	vector <Ptr<ERFilter>> TextRecognitionHelper::getERFilters1()
-	{
-		return erfilter1;
-	}
-	vector <Ptr<ERFilter>> TextRecognitionHelper::getERFilters2()
-	{
-		return erfilter2;
-	}
-	void TextRecognitionHelper::setERFilters1(vector <Ptr<ERFilter>> er1)
-	{
-		erfilter1 = er1;
-	}
-	void TextRecognitionHelper::setERFilters2(vector <Ptr<ERFilter>> er2)
-	{
-		erfilter2 = er2;
-	}
+
+vector< Ptr<OCRTesseract>> TextRecognitionHelper::getOCRs()
+{
+	return ocrs;
+}
+void TextRecognitionHelper::setOCRs(vector< Ptr<OCRTesseract>> o)
+{
+	ocrs = o;
+}
+
+vector <Ptr<ERFilter>> TextRecognitionHelper::getERFilters1()
+{
+	return erfilter1;
+}
+vector <Ptr<ERFilter>> TextRecognitionHelper::getERFilters2()
+{
+	return erfilter2;
+}
+void TextRecognitionHelper::setERFilters1(vector <Ptr<ERFilter>> er1)
+{
+	erfilter1 = er1;
+}
+void TextRecognitionHelper::setERFilters2(vector <Ptr<ERFilter>> er2)
+{
+	erfilter2 = er2;
+}
 

@@ -171,7 +171,6 @@ namespace HoloLensTextRecognition
 		bool															downsize = false;
 		int																REGION_TYPE = 1;
 		int																GROUPING_ALGORITHM = 0;
-		int																RECOGNITION = 0;
 
 		//Constants for hologram manipulation functions
 		const float															degrees = 30.f;

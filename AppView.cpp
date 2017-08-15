@@ -118,45 +118,14 @@ void AppView::Load(Platform::String^ entryPoint)
 	textRecognitionHelper.setERFilters1(er_filters1);
 	textRecognitionHelper.setERFilters2(er_filters2);
 
-	//double t_r = getTickCount();
-
 	//Initialize OCR engine (we initialize 10 instances in order to work several recognitions in parallel)
-	//cout << "Initializing OCR engines ..." << endl;
 	int num_ocrs = 5;
 	vector< Ptr<OCRTesseract> > ocrs;
 	for (int o = 0; o<num_ocrs; o++)
 	{
 		ocrs.push_back(OCRTesseract::create());
 	}
-
-
-
-
-	//Code for using OCRHMMDecoder instead of TesseractOCR
-	/*Mat transition_p;
-	string filename = "OCRHMM_transitions_table.xml";
-	FileStorage fs(filename, FileStorage::READ);
-	fs["transition_probabilities"] >> transition_p;
-	fs.release();
-	Mat emission_p = Mat::eye(62, 62, CV_64FC1);
-	string voc = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-	
-	vector< Ptr<OCRHMMDecoder> > decoders;
-	for (int o = 0; o<num_ocrs; o++)
-	{
-		try
-		{
-			decoders.push_back(OCRHMMDecoder::create(loadOCRHMMClassifierNM("OCRHMM_knn_model_data.xml"),
-				voc, transition_p, emission_p));
-		}
-		catch (...)
-		{
-			continue;
-		}
-
-	}*/
-	//cout << " Done!" << endl;
+	textRecognitionHelper.setOCRs(ocrs);
 }
 
 // This method is called after the window becomes active. It oversees the

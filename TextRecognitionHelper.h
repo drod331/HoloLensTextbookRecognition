@@ -17,22 +17,19 @@
 	class TextRecognitionHelper sealed
 	{
 	public:
+		std::vector<cv::Ptr<cv::text::OCRTesseract>> getOCRs();
+		void setOCRs(std::vector<cv::Ptr<cv::text::OCRTesseract>> o);
 		std::vector<cv::Ptr<cv::text::ERFilter>> getERFilters1();
 		std::vector<cv::Ptr<cv::text::ERFilter>> getERFilters2();
-		//vector<ERFilter*> getERFilters1();
-		//vector<ERFilter*> getERFilters2();
 		void setERFilters1(std::vector <cv::Ptr<cv::text::ERFilter>> er1);
 		void setERFilters2(std::vector <cv::Ptr<cv::text::ERFilter>> er2);
-		//void setERFilters1(vector <ERFilter*>);
-		//void setERFilters2(vector <ERFilter*>);
 		//static TextRecognitionHelper *instance();
 	private:
 		//static TextRecognitionHelper *s_instance;
 		int num_ocrs;
 		int RECOGNITION;
 		std::vector<cv::Rect>* nm_boxes;
-		//std::vector<cv::Ptr<cv::text::OCRTesseract>>* ocrs;
-		//vector< Ptr<OCRHMMDecoder> > decoders;
+		std::vector<cv::Ptr<cv::text::OCRTesseract>> ocrs;
 		std::vector <cv::Ptr<cv::text::ERFilter>> erfilter1;
 		std::vector <cv::Ptr<cv::text::ERFilter>> erfilter2;
 	};
