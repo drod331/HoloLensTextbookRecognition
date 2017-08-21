@@ -9,9 +9,11 @@
 #include "opencv2/features2d.hpp"
 
 #include <iostream>
+#include <robuffer.h>
 
 #include <windows.graphics.directx.direct3d11.interop.h>
 #include <Collection.h>
+#include <Windows.Media.MediaProperties.h>
 
 #include "Audio/OmnidirectionalSound.h"
 #include "Content/ShaderStructures.h"
@@ -21,12 +23,15 @@ using namespace HoloLensTextRecognition;
 
 using namespace concurrency;
 using namespace Platform;
+using namespace Microsoft::WRL;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Numerics;
 using namespace Windows::Graphics::Holographic;
 using namespace Windows::Media::SpeechRecognition;
 using namespace Windows::Perception::Spatial;
 using namespace Windows::UI::Input::Spatial;
+using namespace Windows::Storage::Streams;
+using namespace Windows::Media::MediaProperties;
 using namespace std::placeholders;
 using namespace std;
 using namespace cv;
@@ -681,125 +686,7 @@ bool HoloLensTextRecognitionMain::Render(Windows::Graphics::Holographic::Hologra
     // camera. This includes anything that doesn't need the final view or projection
     // matrix, such as lighting maps.
     //
-	
-	/*Text Recognition (OCR)*/
-	//@TODO code cleanup; relocate to header file
-	char *region_types_str[2] = { const_cast<char *>("ERStats"), const_cast<char *>("MSER") };
-	char *grouping_algorithms_str[2] = { const_cast<char *>("exhaustive_search"), const_cast<char *>("multioriented") };
-	char *recognitions_str[2] = { const_cast<char *>("Tesseract"), const_cast<char *>("NM_chain_features + KNN") };
-
-	Mat grey, orig_grey, out_img;
-	vector<Mat> channels;
-	vector<vector<ERStat> > regions(2);
-	vector< Ptr<ERFilter> > er_filters1 = textRecognitionHelper.getERFilters1();
-	vector< Ptr<ERFilter> > er_filters2 = textRecognitionHelper.getERFilters2();
-
-	//VideoCapture of device 0 returns a device memory error.  This will have to be refactored for proper camera stream allocation 
-	VideoCapture cap(0);
-	if (!cap.isOpened())
-	{
-		return false;
-	}
-
-	//cap.read(frame);
-	cap.grab();
-	cap.retrieve(frame);
-
-	if (downsize)
-		resize(frame, frame, cv::Size(320, 240));
-
-	/*Text Detection*/
-	cv::cvtColor(frame, grey, COLOR_RGB2GRAY);
-	grey.copyTo(orig_grey);
-	// Extract channels to be processed individually
-	channels.clear();
-	channels.push_back(grey);
-	channels.push_back(255 - grey);
-
-
-	regions[0].clear();
-	regions[1].clear();
-
-	cv::parallel_for_(cv::Range(0, (int)channels.size()), Parallel_extractCSER(channels, regions, er_filters1, er_filters2));
-
-	// Detect character groups
-	vector< vector<Vec2i> > nm_region_groups;
-	vector<cv::Rect> nm_boxes;
-	switch (GROUPING_ALGORITHM)
-	{
-		case 0:
-		{
-			erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_HORIZ);
-			break;
-		}
-		case 1:
-		{
-			erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_ANY, "./trained_classifier_erGrouping.xml", 0.5);
-			break;
-		}
-	}
-
-	//fframe.copyTo(out_img);
-	int scale = 1;//downsize ? 2 : 1;
-	float scale_img = (float)((600.f / 300) / scale);;// (float)((600.f / frame.rows) / scale);
-	float scale_font = (float)(2 - scale_img) / 1.4f;
-	vector<string> words_detection;
-	float min_confidence1 = 51.f, min_confidence2 = 60.f;
-	int num_ocrs = 5;//TextRecognitionHelper.getInstance().getNumOCRs();
-	vector< Ptr<OCRTesseract>> ocrs = textRecognitionHelper.getOCRs();
-
-	vector<Mat> detections;
-
-
-	/*for (int i = 0; i<(int)nm_boxes.size(); i++)
-	{
-		rectangle(out_img, nm_boxes[i].tl(), nm_boxes[i].br(), Scalar(255, 255, 0), 3);
-
-		Mat group_img = Mat::zeros(frame.rows + 2, frame.cols + 2, CV_8UC1);
-		er_draw(channels, regions, nm_region_groups[i], group_img);
-		group_img(nm_boxes[i]).copyTo(group_img);
-		copyMakeBorder(group_img, group_img, 15, 15, 15, 15, BORDER_CONSTANT, Scalar(0));
-		detections.push_back(group_img);
-	}*/
-	vector<string> outputs((int)detections.size());
-	vector< vector<cv::Rect> > boxes((int)detections.size());
-	vector< vector<string> > words((int)detections.size());
-	vector< vector<float> > confidences((int)detections.size());
-
-	// parallel process detections in batches of ocrs.size() (== num_ocrs)
-	for (int i = 0; i<(int)detections.size(); i = i + (int)num_ocrs)
-	{
-		Range r;
-		if (i + (int)num_ocrs <= (int)detections.size())
-			r = Range(i, i + (int)num_ocrs);
-		else
-			r = Range(i, (int)detections.size());
-		cv::parallel_for_(r, Parallel_OCR<OCRTesseract>(detections, outputs, boxes, words, confidences, ocrs));
-	}
-
-
-	for (int i = 0; i<(int)detections.size(); i++)
-	{
-
-		outputs[i].erase(remove(outputs[i].begin(), outputs[i].end(), '\n'), outputs[i].end());
-		//cout << "OCR output = \"" << outputs[i] << "\" lenght = " << outputs[i].size() << endl;
-		if (outputs[i].size() < 3)
-			continue;
-
-		for (int j = 0; j<(int)boxes[i].size(); j++)
-		{
-			boxes[i][j].x += nm_boxes[i].x - 15;
-			boxes[i][j].y += nm_boxes[i].y - 15;
-			cout << "  word = " << words[i][j] << "\t confidence = " << confidences[i][j] << endl;
-			if ((words[i][j].size() < 2) || (confidences[i][j] < min_confidence1) ||
-				((words[i][j].size() == 2) && (words[i][j][0] == words[i][j][1])) ||
-				((words[i][j].size()< 4) && (confidences[i][j] < min_confidence2)) ||
-				isRepetitive(words[i][j]))
-				continue;
-			words_detection.push_back(words[i][j]);
-		}
-
-	}
+	TextCapture();
 
     // Lock the set of holographic camera resources, then draw to each camera
     // in this frame.
@@ -1088,5 +975,162 @@ void HoloLensTextRecognitionMain::OnSpeechQualityDegraded(Windows::Media::Speech
 	default:
 		OutputDebugStringW(L"An error was reported with no information.\n");
 		break;
+	}
+}
+
+task<void> HoloLensTextRecognitionMain::TextCapture()
+{
+	// Lock to check current state
+	/*auto lock = m_lock.LockExclusive();
+
+	if (m_currentState != Initialized)
+	{
+		OutputDebugString(L"Trying to start recording in invalid state.\n");
+		throw ref new Platform::FailureException();
+	}
+	m_currentState = StartingRecord;*/
+
+	/*Text Recognition (OCR)*/
+	//@TODO code cleanup; relocate to header file
+	char *region_types_str[2] = { const_cast<char *>("ERStats"), const_cast<char *>("MSER") };
+	char *grouping_algorithms_str[2] = { const_cast<char *>("exhaustive_search"), const_cast<char *>("multioriented") };
+	char *recognitions_str[2] = { const_cast<char *>("Tesseract"), const_cast<char *>("NM_chain_features + KNN") };
+
+	Mat grey, orig_grey, out_img;
+	vector<Mat> channels;
+	vector<vector<ERStat> > regions(2);
+	vector< Ptr<ERFilter> > er_filters1;// = textRecognitionHelper.getERFilters1();
+	vector< Ptr<ERFilter> > er_filters2;// = textRecognitionHelper.getERFilters2();
+
+	
+	auto encodingProfile = MediaEncodingProfile::CreateAvi(VideoEncodingQuality::Auto);
+	InMemoryRandomAccessStream^ stream = ref new InMemoryRandomAccessStream();
+	
+	//VideoCapture of device 0 returns a device memory error.
+	/*VideoCapture cap(0);;
+	if (!cap.isOpened())
+	{
+	return false;
+	}
+
+	//cap.read(frame);
+	cap.grab();
+	cap.retrieve(frame);
+
+	if (downsize)
+	resize(frame, frame, cv::Size(320, 240));
+
+	/*Text Detection*/
+	return create_task(m_mediaCapture->StartRecordToStreamAsync(encodingProfile, stream));/*.then([this]()
+	{
+		//recording = true;
+	});*/
+	IInputStream^ inputStream = stream->GetInputStreamAt(0);
+	DataReader^ dataReader = ref new DataReader(inputStream);
+	IBuffer^ ibuffer = dataReader->ReadBuffer(1024);
+	Object^ obj = ibuffer;
+	ComPtr<IInspectable> insp(reinterpret_cast<IInspectable*>(obj));
+
+	// Query the IBufferByteAccess interface.
+	ComPtr<IBufferByteAccess> bufferByteAccess;
+	DX::ThrowIfFailed(insp.As(&bufferByteAccess));
+
+	// Retrieve the buffer data.
+
+	byte* pixels = nullptr;
+	DX::ThrowIfFailed(bufferByteAccess->Buffer(&pixels));
+
+	Mat frame(cv::Size(896, 504), CV_8UC1, pixels, Mat::AUTO_STEP);
+	//frame = dataReader->ReadBuffer(1024);
+	cv::cvtColor(frame, grey, COLOR_RGB2GRAY);
+	grey.copyTo(orig_grey);
+	// Extract channels to be processed individually
+	channels.clear();
+	channels.push_back(grey);
+	channels.push_back(255 - grey);
+
+
+	regions[0].clear();
+	regions[1].clear();
+
+	cv::parallel_for_(cv::Range(0, (int)channels.size()), Parallel_extractCSER(channels, regions, er_filters1, er_filters2));
+
+	// Detect character groups
+	vector< vector<Vec2i> > nm_region_groups;
+	vector<cv::Rect> nm_boxes;
+	switch (GROUPING_ALGORITHM)
+	{
+	case 0:
+	{
+		erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_HORIZ);
+		break;
+	}
+	case 1:
+	{
+		erGrouping(frame, channels, regions, nm_region_groups, nm_boxes, ERGROUPING_ORIENTATION_ANY, "./trained_classifier_erGrouping.xml", 0.5);
+		break;
+	}
+	}
+
+	//fframe.copyTo(out_img);
+	int scale = 1;//downsize ? 2 : 1;
+	float scale_img = (float)((600.f / 300) / scale);;// (float)((600.f / frame.rows) / scale);
+	float scale_font = (float)(2 - scale_img) / 1.4f;
+	vector<string> words_detection;
+	float min_confidence1 = 51.f, min_confidence2 = 60.f;
+	int num_ocrs = 5;//TextRecognitionHelper.getInstance().getNumOCRs();
+	vector< Ptr<OCRTesseract>> ocrs;// = textRecognitionHelper.getOCRs();
+
+	vector<Mat> detections;
+
+
+	/*for (int i = 0; i<(int)nm_boxes.size(); i++)
+	{
+	rectangle(out_img, nm_boxes[i].tl(), nm_boxes[i].br(), Scalar(255, 255, 0), 3);
+
+	Mat group_img = Mat::zeros(frame.rows + 2, frame.cols + 2, CV_8UC1);
+	er_draw(channels, regions, nm_region_groups[i], group_img);
+	group_img(nm_boxes[i]).copyTo(group_img);
+	copyMakeBorder(group_img, group_img, 15, 15, 15, 15, BORDER_CONSTANT, Scalar(0));
+	detections.push_back(group_img);
+	}*/
+	vector<string> outputs((int)detections.size());
+	vector< vector<cv::Rect> > boxes((int)detections.size());
+	vector< vector<string> > words((int)detections.size());
+	vector< vector<float> > confidences((int)detections.size());
+
+	// parallel process detections in batches of ocrs.size() (== num_ocrs)
+	for (int i = 0; i<(int)detections.size(); i = i + (int)num_ocrs)
+	{
+		Range r;
+		if (i + (int)num_ocrs <= (int)detections.size())
+			r = Range(i, i + (int)num_ocrs);
+		else
+			r = Range(i, (int)detections.size());
+		cv::parallel_for_(r, Parallel_OCR<OCRTesseract>(detections, outputs, boxes, words, confidences, ocrs));
+	}
+
+
+	for (int i = 0; i<(int)detections.size(); i++)
+	{
+
+		outputs[i].erase(remove(outputs[i].begin(), outputs[i].end(), '\n'), outputs[i].end());
+		//cout << "OCR output = \"" << outputs[i] << "\" lenght = " << outputs[i].size() << endl;
+		if (outputs[i].size() < 3)
+			continue;
+
+		for (int j = 0; j<(int)boxes[i].size(); j++)
+		{
+			boxes[i][j].x += nm_boxes[i].x - 15;
+			boxes[i][j].y += nm_boxes[i].y - 15;
+			cout << "  word = " << words[i][j] << "\t confidence = " << confidences[i][j] << endl;
+			if ((words[i][j].size() < 2) || (confidences[i][j] < min_confidence1) ||
+				((words[i][j].size() == 2) && (words[i][j][0] == words[i][j][1])) ||
+				((words[i][j].size()< 4) && (confidences[i][j] < min_confidence2)) ||
+				isRepetitive(words[i][j]))
+				continue;
+			words_detection.push_back(words[i][j]);
+		}
+
 	}
 }

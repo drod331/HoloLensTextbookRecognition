@@ -53,6 +53,7 @@ namespace HoloLensTextRecognition
         // IDeviceNotify
         virtual void OnDeviceLost();
         virtual void OnDeviceRestored();
+		Concurrency::task<void> HoloLensTextRecognitionMain::TextCapture();
 
     private:
         // Asynchronously creates resources for new holographic cameras.
@@ -166,7 +167,7 @@ namespace HoloLensTextRecognition
 		float                                                           m_secondsUntilSoundIsComplete = 0.f;
 
 		//OpenCV variables
-		cv::Mat															frame;
+		//cv::Mat															frame;
 		Platform::Agile<Windows::Media::Capture::MediaCapture>			m_mediaCapture;
 		bool															downsize = false;
 		int																REGION_TYPE = 1;
